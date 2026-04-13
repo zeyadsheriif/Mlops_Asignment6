@@ -1,0 +1,58 @@
+name: Resource Governance Pipeline
+
+# Triggers on all pushes so we can evaluate the branch condition at the job level
+on: [push]
+
+jobs:
+  # 1. The Lightweight Linter Job
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Run Syntax and Style Checks
+        run: |
+          echo "Running lightweight linter..."
+          echo "Linting passed. No syntax errors."
+
+  # 2. The Expensive Training Job
+  train:
+    # Condition A: Must depend on the linter passing
+    needs: linter
+    
+    # Condition B & C: Must be on 'main' branch AND commit message must contain '[run-train]'
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[run-train]')
+    
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Expensive GPU Training
+        run: |
+          echo "Allocating GPU resources..."
+          echo "Running model training..."
+          # Note: If you want to test the failure step, uncomment the line below:
+          # exit 1 
+          echo "Training complete."
+
+      # 3. Create step that only runs on failure
+      - name: Generate Error Logs
+        if: failure()
+        run: |
+          echo "FATAL ERROR: GPU Out of Memory. Expected 16GB, Available 8GB." > error_logs.txt
+          echo "Stack trace: line 42 in train.py" >> error_logs.txt
+
+      # 4. Upload the error logs artifact on failure
+      - name: Upload Error Logs Artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-logs
+          path: error_logs.txt
+
+      # 5. Final cleanup step that ALWAYS runs
+      - name: Cloud Resource Cleanup
+        if: always()
+        run: echo "Cleaning up temporary cloud volumes..."
