@@ -28,8 +28,7 @@ jobs:
         run: |
           echo "Allocating GPU resources..."
           echo "Running model training..."
-          # Note: If you want to test the failure step, uncomment the line below:
-          # exit 1 
+          exit 1 
           echo "Training complete."
 
       - name: Generate Error Logs
