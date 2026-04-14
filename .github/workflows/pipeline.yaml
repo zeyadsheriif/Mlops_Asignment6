@@ -1,4 +1,5 @@
 name: Resource Governance Pipeline
+
 on: [push]
 
 jobs:
@@ -27,7 +28,7 @@ jobs:
         run: |
           echo "Allocating GPU resources..."
           echo "Running model training..."
-          exit 1 
+          # exit 1 
           echo "Training complete."
 
       - name: Generate Error Logs
